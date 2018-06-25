@@ -187,10 +187,12 @@ def init_from_scratch(args, train_exs, dev_exs):
     logger.info('-' * 100)
     logger.info('Build dictionary')
     word_dict = utils.build_word_dict(args, train_exs + dev_exs)
+    char_dict = utils.build_char_dict(args, train_exs + dev_exs)
     logger.info('Num words = %d' % len(word_dict))
 
     # Initialize model
-    model = DocReader(config.get_model_args(args), word_dict, feature_dict)
+    model = DocReader(config.get_model_args(args), word_dict,
+                      feature_dict, char_dict)
 
     # Load pretrained embeddings for words in dictionary
     if args.embedding_file:

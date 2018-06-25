@@ -29,12 +29,14 @@ class DocReader(object):
     # Initialization
     # --------------------------------------------------------------------------
 
-    def __init__(self, args, word_dict, feature_dict,
+    def __init__(self, args, word_dict, feature_dict, char_dict,
                  state_dict=None, normalize=True):
         # Book-keeping.
         self.args = args
         self.word_dict = word_dict
         self.args.vocab_size = len(word_dict)
+        self.args.char_size = len(char_dict)
+        self.char_dict = char_dict
         self.feature_dict = feature_dict
         self.args.num_features = len(feature_dict)
         self.updates = 0
@@ -75,8 +77,13 @@ class DocReader(object):
             logger.info('Adding %d new words to dictionary...' % len(to_add))
             for w in to_add:
                 self.word_dict.add(w)
+                for c in w:
+                    if c not in self.char_dict:
+                        self.char_dict.add(c)
             self.args.vocab_size = len(self.word_dict)
+            self.args.char_size = len(self.char_dict)
             logger.info('New vocab size: %d' % len(self.word_dict))
+            logger.info('New unique characters size: %d' % len(self.char_dict))
 
             old_embedding = self.network.embedding.weight.data
             self.network.embedding = torch.nn.Embedding(self.args.vocab_size,
@@ -84,6 +91,13 @@ class DocReader(object):
                                                         padding_idx=0)
             new_embedding = self.network.embedding.weight.data
             new_embedding[:old_embedding.size(0)] = old_embedding
+
+            old_char_embedding = self.network.char_embedding.weight.data
+            self.network.char_embedding = torch.nn.Embedding(self.args.char_size,
+                                                        self.args.char_embedding_dim,
+                                                        padding_idx=0)
+            new_char_embedding = self.network.char_embedding.weight.data
+            new_char_embedding[:old_char_embedding.size(0)] = old_char_embedding
 
         # Return added words
         return to_add
@@ -100,6 +114,7 @@ class DocReader(object):
         logger.info('Loading pre-trained embeddings for %d words from %s' %
                     (len(words), embedding_file))
         embedding = self.network.embedding.weight.data
+        char_embedding = self.network.char_embedding.weight.data
 
         # When normalized, some words are duplicated. (Average the embeddings).
         vec_counts = {}
@@ -203,13 +218,13 @@ class DocReader(object):
         # Transfer to GPU
         if self.use_cuda:
             inputs = [e if e is None else Variable(e.cuda(async=True))
-                      for e in ex[:5]]
-            target_s = Variable(ex[5].cuda(async=True))
-            target_e = Variable(ex[6].cuda(async=True))
+                      for e in ex[:6]]
+            target_s = Variable(ex[6].cuda(async=True))
+            target_e = Variable(ex[7].cuda(async=True))
         else:
-            inputs = [e if e is None else Variable(e) for e in ex[:5]]
-            target_s = Variable(ex[5])
-            target_e = Variable(ex[6])
+            inputs = [e if e is None else Variable(e) for e in ex[:6]]
+            target_s = Variable(ex[6])
+            target_e = Variable(ex[7])
 
         # Run forward
         score_s, score_e = self.network(*inputs)

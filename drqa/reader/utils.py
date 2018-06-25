@@ -120,6 +120,17 @@ def build_word_dict(args, examples):
     for w in load_words(args, examples):
         word_dict.add(w)
     return word_dict
+    
+
+def build_char_dict(args, examples):
+    """ Return a dictionary of all characters from question and documents
+    words in provided examples.
+    """
+    char_dict = Dictionary()
+    for w in load_words(args, examples):
+        for char in w:
+            char_dict.add(c)
+    return char_dict
 
 
 def top_question_words(args, examples, word_dict):
