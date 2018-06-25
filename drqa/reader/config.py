@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'doc_layers',
     'question_layers', 'rnn_type', 'concat_rnn_layers', 'question_merge',
-    'use_qemb', 'use_in_question', 'use_pos', 'use_ner', 'use_lemma', 'use_tf'
+    'use_qemb', 'use_in_question', 'use_pos', 'use_ner', 'use_lemma', 'use_tf',
+    'cnn_output_dim', 'char_embedding_dim', 'use_cnn'
 }
 
 # Index of arguments concerning the model optimizer/training
@@ -39,6 +40,10 @@ def add_model_args(parser):
                        help='Model architecture type')
     model.add_argument('--embedding-dim', type=int, default=300,
                        help='Embedding size if embedding_file is not given')
+    model.add_argument('--cnn_output_dim', type=int, default=50,
+                       help='output dimension of character-level CNN')
+    model.add_arugment('char_embedding_dim', type=int, default=50,
+                       help='Embedding size for characters')
     model.add_argument('--hidden-size', type=int, default=128,
                        help='Hidden size of RNN units')
     model.add_argument('--doc-layers', type=int, default=3,
@@ -56,6 +61,8 @@ def add_model_args(parser):
                         help='The way of computing the question representation')
     detail.add_argument('--use-qemb', type='bool', default=True,
                         help='Whether to use weighted question embeddings')
+    detail.add_argument('--use-cnn', type='bool', default=True,
+                        help='Whether to use character level CNN')
     detail.add_argument('--use-in-question', type='bool', default=True,
                         help='Whether to use in_question_* features')
     detail.add_argument('--use-pos', type='bool', default=True,

@@ -29,6 +29,11 @@ class RnnDocReader(nn.Module):
                                       args.embedding_dim,
                                       padding_idx=0)
 
+        # Character embeddings
+        self.char_embedding = nn.Embedding(args.char_size,
+                                           args.char_embedding_dim,
+                                           padding_idx=0)
+
         # Projection for attention weighted question
         if args.use_qemb:
             self.qemb_match = layers.SeqAttnMatch(args.embedding_dim)
@@ -37,6 +42,13 @@ class RnnDocReader(nn.Module):
         doc_input_size = args.embedding_dim + args.num_features
         if args.use_qemb:
             doc_input_size += args.embedding_dim
+        if arg.use_cnn:
+            doc_input_size += args.cnn_output_dim
+
+        # character level CNN
+        self.char_cnn = layers.charCNN(
+            output_size=args.cnn_output_dim
+        )
 
         # RNN document encoder
         self.doc_rnn = layers.StackedBRNN(
@@ -87,7 +99,7 @@ class RnnDocReader(nn.Module):
             normalize=normalize,
         )
 
-    def forward(self, x1, x1_f, x1_mask, x2, x2_mask):
+    def forward(self, x1, x1_f, x1_mask, x2, x2_mask, c):
         """Inputs:
         x1 = document word indices             [batch * len_d]
         x1_f = document word features indices  [batch * len_d * nfeat]
@@ -98,6 +110,15 @@ class RnnDocReader(nn.Module):
         # Embed both document and question
         x1_emb = self.embedding(x1)
         x2_emb = self.embedding(x2)
+        arr = []
+        for cid in c:
+            c_emb = self.char_embedding(cid)
+            conv = self.char_cnn(c_emb)
+            arr.append(conv)
+        conv_out = torch.cat(arr).squeeze()
+        # now concatenate character-level representation of each word to
+        # original word embedding
+        x1_emb = torch.cat((x1_emb, conv_out), 1)
 
         # Dropout on embeddings
         if self.args.dropout_emb > 0:

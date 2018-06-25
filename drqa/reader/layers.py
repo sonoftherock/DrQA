@@ -16,6 +16,26 @@ from torch.autograd import Variable
 # Modules
 # ------------------------------------------------------------------------------
 
+class charCNN(nn.Module):
+    """Character-level CNN.
+
+    """
+
+    def __init__(self, output_size):
+        super(charCNN, self).__init__()
+        self.layer1 = nn.Sequential(
+            self.conv = nn.Conv1d(1, 32, 3)
+            self.pool = nn.MaxPool1d(3)
+        )
+        self.layer2 = nn.Sequential(
+            self.conv = nn.Conv1d(32, output_size, 3)
+            self.pool = nn.MaxPool1d(3)
+        )
+
+    def forward(self, word):
+        out = self.layer1(word)
+        out = self.layer2(out)
+        return out
 
 class StackedBRNN(nn.Module):
     """Stacked Bi-directional RNNs.
