@@ -11,10 +11,13 @@ DEFAULTS = {
     'corenlp_classpath': os.getenv('CLASSPATH')
 }
 
-global DEFAULTS
-DEFAULTS[key] = value
 
+def set_default(key, value):
+    global DEFAULTS
+    DEFAULTS[key] = value
 
+from .ICU_tokenizer import ICUTokenizer
+from .konlpy_tokenizer import KoNLPyTokenizer
 from .ko_tokenizer import KoreanTokenizer
 from .corenlp_tokenizer import CoreNLPTokenizer
 from .regexp_tokenizer import RegexpTokenizer
@@ -28,6 +31,8 @@ except ImportError:
 
 
 def get_class(name):
+    if name == 'ICU':
+        return ICUTokenizer
     if name == 'spacy':
         return SpacyTokenizer
     if name == 'corenlp':
@@ -36,6 +41,10 @@ def get_class(name):
         return RegexpTokenizer
     if name == 'simple':
         return SimpleTokenizer
+    if name == 'koreanregex':
+        return KoreanTokenizer
+    if name == 'konlpy':
+        return KoNLPyTokenizer
 
     raise RuntimeError('Invalid tokenizer: %s' % name)
 

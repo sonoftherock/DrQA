@@ -1,10 +1,16 @@
 from konlpy.tag import Twitter
+from drqa.tokenizers.tokenizer import Tokens, Tokenizer
+import logging
 
+logger = logging.getLogger(__name__)
 
-class KoreanTokenizer(object):
+class KoNLPyTokenizer(Tokenizer):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.twitter = Twitter()
+        if len(kwargs.get('annotators', {})) > 0:
+            logger.warning('%s only tokenizes! Skipping annotators: %s' % (type(self).__name__, kwargs.get('annotators')))
+        self.annotators = set()
 
     def tokenize(self, text):
         """Given raw text, output a list of token data tuples."""
@@ -30,7 +36,7 @@ class KoreanTokenizer(object):
             text = text[len(token):]
             past += len(token)
             i += 1
-        return tuples
+        return Tokens(tuples, self.annotators)
 
     def untokenize(self, tokens):
         """Given the output list of tokenize, return the original

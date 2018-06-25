@@ -139,6 +139,7 @@ args = parser.parse_args()
 t0 = time.time()
 
 in_file = os.path.join(args.data_dir, args.split + '.json')
+print(in_file)
 print('Loading dataset %s' % in_file, file=sys.stderr)
 dataset = load_dataset(in_file)
 
