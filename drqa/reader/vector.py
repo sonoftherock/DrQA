@@ -94,6 +94,7 @@ def batchify(batch):
     docs = [ex[0] for ex in batch]
     features = [ex[1] for ex in batch]
     questions = [ex[2] for ex in batch]
+    chars = [ex[5] for ex in batch]
 
     # Batch documents and features
     max_length = max([d.size(0) for d in docs])
@@ -132,4 +133,4 @@ def batchify(batch):
     else:
         raise RuntimeError('Incorrect number of inputs per example.')
 
-    return x1, x1_f, x1_mask, x2, x2_mask, y_s, y_e, ids
+    return x1, x1_f, x1_mask, x2, x2_mask, chars, y_s, y_e, ids

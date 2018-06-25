@@ -24,12 +24,12 @@ class charCNN(nn.Module):
     def __init__(self, output_size):
         super(charCNN, self).__init__()
         self.layer1 = nn.Sequential(
-            self.conv = nn.Conv1d(1, 32, 3)
-            self.pool = nn.MaxPool1d(3)
+            nn.Conv1d(1, 32, 3),
+            nn.MaxPool1d(3)
         )
         self.layer2 = nn.Sequential(
-            self.conv = nn.Conv1d(32, output_size, 3)
-            self.pool = nn.MaxPool1d(3)
+            nn.Conv1d(32, output_size, 3),
+            nn.MaxPool1d(3)
         )
 
     def forward(self, word):
