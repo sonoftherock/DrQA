@@ -116,6 +116,7 @@ class RnnDocReader(nn.Module):
             conv = self.char_cnn(c_emb)
             arr.append(conv)
         conv_out = torch.cat(arr).squeeze()
+        
         # now concatenate character-level representation of each word to
         # original word embedding
         x1_emb = torch.cat((x1_emb, conv_out), 1)
