@@ -36,23 +36,29 @@ class RnnDocReader(nn.Module):
 
         # Projection for attention weighted question
         if args.use_qemb:
-            self.qemb_match = layers.SeqAttnMatch(args.embedding_dim)
+            self.qemb_match = layers.SeqAttnMatch(args.embedding_dim, 76)
 
         # Input size to RNN: word emb + question emb + manual features
         doc_input_size = args.embedding_dim + args.num_features
         if args.use_qemb:
             doc_input_size += args.embedding_dim
-        if arg.use_cnn:
-            doc_input_size += args.cnn_output_dim
+        if args.use_cnn:
+            doc_input_size += 76
 
         # character level CNN
-        self.char_cnn = layers.charCNN(
-            output_size=args.cnn_output_dim
+        self.char_cnn1 = layers.charCNN(
+            input_channels=300,
+            output_channels=300
+        )
+
+        self.char_cnn2 = layers.charCNN(
+            input_channels=300,
+            output_channels=300
         )
 
         # RNN document encoder
         self.doc_rnn = layers.StackedBRNN(
-            input_size=doc_input_size,
+            input_size=doc_input_size + 76,
             hidden_size=args.hidden_size,
             num_layers=args.doc_layers,
             dropout_rate=args.dropout_rnn,
@@ -64,7 +70,7 @@ class RnnDocReader(nn.Module):
 
         # RNN question encoder
         self.question_rnn = layers.StackedBRNN(
-            input_size=args.embedding_dim,
+            input_size=args.embedding_dim + 76,
             hidden_size=args.hidden_size,
             num_layers=args.question_layers,
             dropout_rate=args.dropout_rnn,
@@ -99,7 +105,7 @@ class RnnDocReader(nn.Module):
             normalize=normalize,
         )
 
-    def forward(self, x1, x1_f, x1_mask, x2, x2_mask, c):
+    def forward(self, x1, x1_f, x1_mask, x2, x2_mask, c_d, c_q):
         """Inputs:
         x1 = document word indices             [batch * len_d]
         x1_f = document word features indices  [batch * len_d * nfeat]
@@ -110,16 +116,18 @@ class RnnDocReader(nn.Module):
         # Embed both document and question
         x1_emb = self.embedding(x1)
         x2_emb = self.embedding(x2)
-        arr = []
-        for cid in c:
-            c_emb = self.char_embedding(cid)
-            conv = self.char_cnn(c_emb)
-            arr.append(conv)
-        conv_out = torch.cat(arr).squeeze()
-        
+        c_d_emb = self.char_embedding(c_d.view(-1, c_d.size(2)))
+        conv_d = self.char_cnn1(c_d_emb.view(c_d.size(0), c_d.size(1), -1))
+        c_q_emb = self.char_embedding(c_q.view(-1,c_q.size(2)))
+        conv_q = self.char_cnn2(c_q_emb.view(c_q.size(0), c_q.size(1), -1))
+
         # now concatenate character-level representation of each word to
         # original word embedding
-        x1_emb = torch.cat((x1_emb, conv_out), 1)
+        x1_emb = torch.cat((x1_emb, conv_d), 2)
+        x2_emb = torch.cat((x2_emb, conv_q), 2)
+
+        # Make sure mask dimensions are adjusted.
+        # tbd
 
         # Dropout on embeddings
         if self.args.dropout_emb > 0:

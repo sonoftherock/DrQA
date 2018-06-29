@@ -211,7 +211,7 @@ def train(args, data_loader, model, global_stats):
     # Initialize meters + timers
     train_loss = utils.AverageMeter()
     epoch_time = utils.Timer()
-
+    count = 0
     # Run one epoch
     for idx, ex in enumerate(data_loader):
         train_loss.update(*model.update(ex))
@@ -297,10 +297,12 @@ def validate_official(args, data_loader, model, global_stats,
         for i in range(batch_size):
             s_offset = offsets[ex_id[i]][pred_s[i][0]][0]
             e_offset = offsets[ex_id[i]][pred_e[i][0]][1]
-            prediction = texts[ex_id[i]][s_offset:e_offset]
+            #prediction = texts[ex_id[i]][s_offset:e_offset]
+            prediction = (s_offset, e_offset)
 
             # Compute metrics
-            ground_truths = answers[ex_id[i]]
+            #ground_truths = answers[ex_id[i]]
+            ground_truths = (,)
             exact_match.update(utils.metric_max_over_ground_truths(
                 utils.exact_match_score, prediction, ground_truths))
             f1.update(utils.metric_max_over_ground_truths(
@@ -478,7 +480,6 @@ def main(args):
     stats = {'timer': utils.Timer(), 'epoch': 0, 'best_valid': 0}
     for epoch in range(start_epoch, args.num_epochs):
         stats['epoch'] = epoch
-
         # Train
         train(args, train_loader, model, stats)
 

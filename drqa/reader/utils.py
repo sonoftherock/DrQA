@@ -128,7 +128,7 @@ def build_char_dict(args, examples):
     """
     char_dict = Dictionary()
     for w in load_words(args, examples):
-        for char in w:
+        for c in w:
             char_dict.add(c)
     return char_dict
 
@@ -199,17 +199,27 @@ def normalize_answer(s):
 
     return white_space_fix(remove_articles(remove_punc(lower(s))))
 
+def span_overlap(prediction, ground_truth):
+    start = max(prediction[0], ground_truth[0])
+    end = min(prediction[1], ground_truth[1])
+    if end > start:
+        return start, end
+    return None
+
 
 def f1_score(prediction, ground_truth):
     """Compute the geometric mean of precision and recall for answer tokens."""
-    prediction_tokens = normalize_answer(prediction).split()
-    ground_truth_tokens = normalize_answer(ground_truth).split()
-    common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
-    num_same = sum(common.values())
-    if num_same == 0:
-        return 0
-    precision = 1.0 * num_same / len(prediction_tokens)
-    recall = 1.0 * num_same / len(ground_truth_tokens)
+    #prediction_tokens = normalize_answer(prediction).split()
+    #ground_truth_tokens = normalize_answer(ground_truth).split()
+    #common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
+    overlap = span_overlap(prediction, ground_truth)
+    precision = (overlap[1] - overlap[0]) / (prediction[1] - prediction[0])
+    recall = (overlap[1] - overlap[0]) / (ground_truth[1] - ground_truth[0]) 
+    #num_same = sum(common.values())
+    #if num_same == 0:
+        #return 0
+    #precision = 1.0 * num_same / len(prediction_tokens)
+    #recall = 1.0 * num_same / len(ground_truth_tokens)
     f1 = (2 * precision * recall) / (precision + recall)
     return f1
 

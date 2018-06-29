@@ -42,7 +42,7 @@ def add_model_args(parser):
                        help='Embedding size if embedding_file is not given')
     model.add_argument('--cnn_output_dim', type=int, default=50,
                        help='output dimension of character-level CNN')
-    model.add_arugment('char_embedding_dim', type=int, default=50,
+    model.add_argument('--char_embedding_dim', type=int, default=50,
                        help='Embedding size for characters')
     model.add_argument('--hidden-size', type=int, default=128,
                        help='Hidden size of RNN units')

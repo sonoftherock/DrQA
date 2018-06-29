@@ -21,14 +21,16 @@ class charCNN(nn.Module):
 
     """
 
-    def __init__(self, output_size):
+    def __init__(self, input_channels, output_channels):
         super(charCNN, self).__init__()
+        self.input_channels = input_channels
+        self.output_channels = output_channels
         self.layer1 = nn.Sequential(
-            nn.Conv1d(1, 32, 3),
+            nn.Conv1d(input_channels, 128, 3),
             nn.MaxPool1d(3)
         )
         self.layer2 = nn.Sequential(
-            nn.Conv1d(32, output_size, 3),
+            nn.Conv1d(128, output_channels, 3),
             nn.MaxPool1d(3)
         )
 
@@ -192,10 +194,10 @@ class SeqAttnMatch(nn.Module):
     * alpha_j = softmax(y_j * x_i)
     """
 
-    def __init__(self, input_size, identity=False):
+    def __init__(self, input_size, conv, identity=False):
         super(SeqAttnMatch, self).__init__()
         if not identity:
-            self.linear = nn.Linear(input_size, input_size)
+            self.linear = nn.Linear(input_size + conv, input_size + conv)
         else:
             self.linear = None
 
@@ -213,7 +215,6 @@ class SeqAttnMatch(nn.Module):
             x_proj = self.linear(x.view(-1, x.size(2))).view(x.size())
             x_proj = F.relu(x_proj)
             y_proj = self.linear(y.view(-1, y.size(2))).view(y.size())
-            y_proj = F.relu(y_proj)
         else:
             x_proj = x
             y_proj = y

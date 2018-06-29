@@ -9,6 +9,11 @@
 from collections import Counter
 import torch
 
+import unicodedata
+
+def normalize(t):
+    return unicodedata.normalize('NFD', t)
+
 
 def vectorize(ex, model, single_answer=False):
     """Torchify a single example."""
@@ -20,13 +25,20 @@ def vectorize(ex, model, single_answer=False):
     # Index words
     document = torch.LongTensor([word_dict[w] for w in ex['document']])
     question = torch.LongTensor([word_dict[w] for w in ex['question']])
-    word = []
-    sent = []
+
+    sent_d = []
     for w in ex['document']:
-        for c in w:
+        word = []
+        for c in normalize(w):
             word.append(char_dict[c])
-        sent.append(torch.LongTensor(word))
-    characters = sent
+        sent_d.append(torch.LongTensor(word))
+
+    sent_q = []
+    for w in ex['question']:
+        word = []
+        for c in normalize(w):
+            word.append(char_dict[c])
+        sent_q.append(torch.LongTensor(word))
 
     # Create extra features vector
     if len(feature_dict) > 0:
@@ -81,12 +93,12 @@ def vectorize(ex, model, single_answer=False):
         start = [a[0] for a in ex['answers']]
         end = [a[1] for a in ex['answers']]
 
-    return document, features, question, start, end, sent, ex['id']
+    return document, features, question, start, end, sent_d, sent_q, ex['id']
 
 
 def batchify(batch):
     """Gather a batch of individual examples into one batch."""
-    NUM_INPUTS = 3
+    NUM_INPUTS = 5
     NUM_TARGETS = 2
     NUM_EXTRA = 1
 
@@ -94,10 +106,31 @@ def batchify(batch):
     docs = [ex[0] for ex in batch]
     features = [ex[1] for ex in batch]
     questions = [ex[2] for ex in batch]
-    chars = [ex[5] for ex in batch]
+    chars_d = [ex[5] for ex in batch]
+    chars_q = [ex[6] for ex in batch]
+    
+    # Batch character indices for document
+    #max_length = max([len(word) for word in chars_d])
+    
+    # Find longest word in both document and question
+    #doc_words = [len(c) for word in chars_d for c in word]
+    #q_words = [len(c) for word in chars_q for c in word]
+    #max_chars = max(doc_words + q_words)
+    max_chars, max_length = 50, 300
+    c1 = torch.LongTensor(len(chars_d), max_length, max_chars).zero_()
+    for i, sent in enumerate(chars_d):
+        for j, word in enumerate(sent):
+            c1[i, j, :word.size(0)].copy_(word)
+    
+    # Batch character indices for question
+    #max_length = max([len(word) for word in chars_q])
+    c2 = torch.LongTensor(len(chars_q), max_length, max_chars).zero_()
+    for i, sent in enumerate(chars_q):
+        for j, word in enumerate(sent):
+            c2[i, j, :word.size(0)].copy_(word)
 
     # Batch documents and features
-    max_length = max([d.size(0) for d in docs])
+    #max_length = max([d.size(0) for d in docs])
     x1 = torch.LongTensor(len(docs), max_length).zero_()
     x1_mask = torch.ByteTensor(len(docs), max_length).fill_(1)
     if features[0] is None:
@@ -111,7 +144,7 @@ def batchify(batch):
             x1_f[i, :d.size(0)].copy_(features[i])
 
     # Batch questions
-    max_length = max([q.size(0) for q in questions])
+    #max_length = max([q.size(0) for q in questions])
     x2 = torch.LongTensor(len(questions), max_length).zero_()
     x2_mask = torch.ByteTensor(len(questions), max_length).fill_(1)
     for i, q in enumerate(questions):
@@ -120,7 +153,7 @@ def batchify(batch):
 
     # Maybe return without targets
     if len(batch[0]) == NUM_INPUTS + NUM_EXTRA:
-        return x1, x1_f, x1_mask, x2, x2_mask, ids
+        return x1, x1_f, x1_mask, x2, x2_mask, c1, c2, ids
 
     elif len(batch[0]) == NUM_INPUTS + NUM_EXTRA + NUM_TARGETS:
         # ...Otherwise add targets
@@ -133,4 +166,4 @@ def batchify(batch):
     else:
         raise RuntimeError('Incorrect number of inputs per example.')
 
-    return x1, x1_f, x1_mask, x2, x2_mask, chars, y_s, y_e, ids
+    return x1, x1_f, x1_mask, x2, x2_mask, c1, c2, y_s, y_e, ids

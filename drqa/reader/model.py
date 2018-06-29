@@ -218,13 +218,13 @@ class DocReader(object):
         # Transfer to GPU
         if self.use_cuda:
             inputs = [e if e is None else Variable(e.cuda(async=True))
-                      for e in ex[:6]]
-            target_s = Variable(ex[6].cuda(async=True))
-            target_e = Variable(ex[7].cuda(async=True))
+                      for e in ex[:7]]
+            target_s = Variable(ex[7].cuda(async=True))
+            target_e = Variable(ex[8].cuda(async=True))
         else:
-            inputs = [e if e is None else Variable(e) for e in ex[:6]]
-            target_s = Variable(ex[6])
-            target_e = Variable(ex[7])
+            inputs = [e if e is None else Variable(e) for e in ex[:7]]
+            target_s = Variable(ex[7])
+            target_e = Variable(ex[8])
 
         # Run forward
         score_s, score_e = self.network(*inputs)
