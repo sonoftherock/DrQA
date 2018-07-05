@@ -301,8 +301,7 @@ def validate_official(args, data_loader, model, global_stats,
             prediction = (s_offset, e_offset)
 
             # Compute metrics
-            #ground_truths = answers[ex_id[i]]
-            ground_truths = (,)
+            ground_truths = answers[ex_id[i]]
             exact_match.update(utils.metric_max_over_ground_truths(
                 utils.exact_match_score, prediction, ground_truths))
             f1.update(utils.metric_max_over_ground_truths(
@@ -375,7 +374,7 @@ def main(args):
     if args.official_eval:
         dev_texts = utils.load_text(args.dev_json)
         dev_offsets = {ex['id']: ex['offsets'] for ex in dev_exs}
-        dev_answers = utils.load_answers(args.dev_json)
+        _, dev_answers = utils.load_answers(args.dev_json)
 
     # --------------------------------------------------------------------------
     # MODEL

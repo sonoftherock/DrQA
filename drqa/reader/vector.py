@@ -110,27 +110,26 @@ def batchify(batch):
     chars_q = [ex[6] for ex in batch]
     
     # Batch character indices for document
-    #max_length = max([len(word) for word in chars_d])
+    max_length = max([len(word) for word in chars_d])
     
     # Find longest word in both document and question
-    #doc_words = [len(c) for word in chars_d for c in word]
-    #q_words = [len(c) for word in chars_q for c in word]
-    #max_chars = max(doc_words + q_words)
-    max_chars, max_length = 50, 300
-    c1 = torch.LongTensor(len(chars_d), max_length, max_chars).zero_()
-    for i, sent in enumerate(chars_d):
-        for j, word in enumerate(sent):
+    doc_words = [len(word) for doc in chars_d for word in doc]
+    q_words = [len(word) for doc in chars_q for word in doc]
+    max_chars = max(doc_words + q_words)
+    c1 = torch.LongTensor(len(docs), max_length, max_chars).zero_()
+    for i, doc in enumerate(chars_d):
+        for j, word in enumerate(doc):
             c1[i, j, :word.size(0)].copy_(word)
-    
+
     # Batch character indices for question
-    #max_length = max([len(word) for word in chars_q])
-    c2 = torch.LongTensor(len(chars_q), max_length, max_chars).zero_()
-    for i, sent in enumerate(chars_q):
-        for j, word in enumerate(sent):
+    max_length = max([len(word) for word in chars_q])
+    c2 = torch.LongTensor(len(docs), max_length, max_chars).zero_()
+    for i, doc in enumerate(chars_q):
+        for j, word in enumerate(doc):
             c2[i, j, :word.size(0)].copy_(word)
 
     # Batch documents and features
-    #max_length = max([d.size(0) for d in docs])
+    max_length = max([d.size(0) for d in docs])
     x1 = torch.LongTensor(len(docs), max_length).zero_()
     x1_mask = torch.ByteTensor(len(docs), max_length).fill_(1)
     if features[0] is None:
@@ -144,7 +143,7 @@ def batchify(batch):
             x1_f[i, :d.size(0)].copy_(features[i])
 
     # Batch questions
-    #max_length = max([q.size(0) for q in questions])
+    max_length = max([q.size(0) for q in questions])
     x2 = torch.LongTensor(len(questions), max_length).zero_()
     x2_mask = torch.ByteTensor(len(questions), max_length).fill_(1)
     for i, q in enumerate(questions):

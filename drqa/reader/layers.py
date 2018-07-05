@@ -21,22 +21,18 @@ class charCNN(nn.Module):
 
     """
 
-    def __init__(self, input_channels, output_channels):
+    def __init__(self, input_channels, output_channels, kernel_size):
         super(charCNN, self).__init__()
         self.input_channels = input_channels
         self.output_channels = output_channels
         self.layer1 = nn.Sequential(
-            nn.Conv1d(input_channels, 128, 3),
-            nn.MaxPool1d(3)
-        )
-        self.layer2 = nn.Sequential(
-            nn.Conv1d(128, output_channels, 3),
-            nn.MaxPool1d(3)
+            nn.Conv1d(input_channels, output_channels, kernel_size, padding=int((kernel_size - 1)/2)),
+            nn.AdaptiveMaxPool1d(1),
+            nn.ReLU()
         )
 
     def forward(self, word):
         out = self.layer1(word)
-        out = self.layer2(out)
         return out
 
 class StackedBRNN(nn.Module):
@@ -194,10 +190,10 @@ class SeqAttnMatch(nn.Module):
     * alpha_j = softmax(y_j * x_i)
     """
 
-    def __init__(self, input_size, conv, identity=False):
+    def __init__(self, input_size, identity=False):
         super(SeqAttnMatch, self).__init__()
         if not identity:
-            self.linear = nn.Linear(input_size + conv, input_size + conv)
+            self.linear = nn.Linear(input_size, input_size)
         else:
             self.linear = None
 

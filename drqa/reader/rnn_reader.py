@@ -36,29 +36,30 @@ class RnnDocReader(nn.Module):
 
         # Projection for attention weighted question
         if args.use_qemb:
-            self.qemb_match = layers.SeqAttnMatch(args.embedding_dim, 76)
+            self.qemb_match = layers.SeqAttnMatch(args.embedding_dim)
 
         # Input size to RNN: word emb + question emb + manual features
         doc_input_size = args.embedding_dim + args.num_features
         if args.use_qemb:
             doc_input_size += args.embedding_dim
-        if args.use_cnn:
-            doc_input_size += 76
+
 
         # character level CNN
         self.char_cnn1 = layers.charCNN(
-            input_channels=300,
-            output_channels=300
+            input_channels=args.char_embedding_dim,
+            output_channels=args.cnn_output_dim,
+            kernel_size=3
         )
 
         self.char_cnn2 = layers.charCNN(
-            input_channels=300,
-            output_channels=300
+            input_channels=9,
+            output_channels=9,
+            kernel_size=3
         )
 
         # RNN document encoder
         self.doc_rnn = layers.StackedBRNN(
-            input_size=doc_input_size + 76,
+            input_size=doc_input_size + args.cnn_output_dim,
             hidden_size=args.hidden_size,
             num_layers=args.doc_layers,
             dropout_rate=args.dropout_rnn,
@@ -70,7 +71,7 @@ class RnnDocReader(nn.Module):
 
         # RNN question encoder
         self.question_rnn = layers.StackedBRNN(
-            input_size=args.embedding_dim + 76,
+            input_size=args.embedding_dim,
             hidden_size=args.hidden_size,
             num_layers=args.question_layers,
             dropout_rate=args.dropout_rnn,
@@ -105,6 +106,7 @@ class RnnDocReader(nn.Module):
             normalize=normalize,
         )
 
+    
     def forward(self, x1, x1_f, x1_mask, x2, x2_mask, c_d, c_q):
         """Inputs:
         x1 = document word indices             [batch * len_d]
@@ -116,18 +118,6 @@ class RnnDocReader(nn.Module):
         # Embed both document and question
         x1_emb = self.embedding(x1)
         x2_emb = self.embedding(x2)
-        c_d_emb = self.char_embedding(c_d.view(-1, c_d.size(2)))
-        conv_d = self.char_cnn1(c_d_emb.view(c_d.size(0), c_d.size(1), -1))
-        c_q_emb = self.char_embedding(c_q.view(-1,c_q.size(2)))
-        conv_q = self.char_cnn2(c_q_emb.view(c_q.size(0), c_q.size(1), -1))
-
-        # now concatenate character-level representation of each word to
-        # original word embedding
-        x1_emb = torch.cat((x1_emb, conv_d), 2)
-        x2_emb = torch.cat((x2_emb, conv_q), 2)
-
-        # Make sure mask dimensions are adjusted.
-        # tbd
 
         # Dropout on embeddings
         if self.args.dropout_emb > 0:
@@ -136,20 +126,10 @@ class RnnDocReader(nn.Module):
             x2_emb = nn.functional.dropout(x2_emb, p=self.args.dropout_emb,
                                            training=self.training)
 
-        # Form document encoding inputs
-        drnn_input = [x1_emb]
 
         # Add attention-weighted question representation
         if self.args.use_qemb:
             x2_weighted_emb = self.qemb_match(x1_emb, x2_emb, x2_mask)
-            drnn_input.append(x2_weighted_emb)
-
-        # Add manual features
-        if self.args.num_features > 0:
-            drnn_input.append(x1_f)
-
-        # Encode document with RNN
-        doc_hiddens = self.doc_rnn(torch.cat(drnn_input, 2), x1_mask)
 
         # Encode question with RNN + merge hiddens
         question_hiddens = self.question_rnn(x2_emb, x2_mask)
@@ -158,6 +138,33 @@ class RnnDocReader(nn.Module):
         elif self.args.question_merge == 'self_attn':
             q_merge_weights = self.self_attn(question_hiddens, x2_mask)
         question_hidden = layers.weighted_avg(question_hiddens, q_merge_weights)
+
+        # Embed each character in a word (batch size * longest document * longest word * embedding dim)
+        # Reshape c_d to be (number of words in ENTIRE batch * number of chars in longest word)
+        # conv_d = (batch size, max document length, number of features (cnn output channels)
+        c_d_emb = self.char_embedding(c_d.view(-1, c_d.size(2)))
+        c_d_emb = c_d_emb.transpose(1,2)
+        conv_d = self.char_cnn1(c_d_emb).view(c_d.size(0),c_d.size(1), -1)
+        #c_q_emb = self.char_embedding(c_q.view(-1,c_q.size(2)))
+        #conv_q = self.char_cnn2(c_q_emb.view(c_q.size(0), c_q.size(1), -1))
+
+        # Form document encoding inputs
+        drnn_input = [x1_emb]
+
+        # now concatenate character-level representation of each word to
+        # original word embedding
+        if self.args.use_cnn:
+            drnn_input.append(conv_d)
+
+        if self.args.use_qemb:
+            drnn_input.append(x2_weighted_emb)
+
+        # Add manual features
+        if self.args.num_features > 0:
+            drnn_input.append(x1_f)
+
+        # Encode document with RNN
+        doc_hiddens = self.doc_rnn(torch.cat(drnn_input, 2), x1_mask)
 
         # Predict start and end positions
         start_scores = self.start_attn(doc_hiddens, question_hidden, x1_mask)

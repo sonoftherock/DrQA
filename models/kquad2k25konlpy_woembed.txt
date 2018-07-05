@@ -1,0 +1,80 @@
+06/29/2018 05:07:20 PM: [ COMMAND: scripts/reader/train.py --model-name kquad2k25konlpy_woembed --data-dir data/datasets/DrQA_KQuAD --train-file kquad_2k25%_training_set-processed-konlpy.txt --dev-file kquad_2k_test_set-processed-konlpy.txt --dev-json kquad_2k_test_set.json --use-pos False --use-ner False --use-lemma False --num-epochs 40 --model-dir ./models --embedding-file  ]
+06/29/2018 05:07:20 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:20 PM: [ Load data files ]
+06/29/2018 05:07:24 PM: [ Num train examples = 18450 ]
+06/29/2018 05:07:24 PM: [ Num dev examples = 1959 ]
+06/29/2018 05:07:24 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:24 PM: [ Training model from scratch... ]
+06/29/2018 05:07:24 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:24 PM: [ Generate features ]
+06/29/2018 05:07:24 PM: [ Num features = 3 ]
+06/29/2018 05:07:24 PM: [ {'in_question': 0, 'in_question_uncased': 1, 'tf': 2} ]
+06/29/2018 05:07:24 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:24 PM: [ Build dictionary ]
+06/29/2018 05:07:27 PM: [ Num words = 51350 ]
+06/29/2018 05:07:31 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:31 PM: [ Make data loaders ]
+06/29/2018 05:07:31 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:31 PM: [ CONFIG:
+{
+    "batch_size": 32,
+    "char_embedding_dim": 50,
+    "checkpoint": false,
+    "cnn_output_dim": 50,
+    "concat_rnn_layers": true,
+    "cuda": true,
+    "data_dir": "data/datasets/DrQA_KQuAD",
+    "data_workers": 5,
+    "dev_file": "data/datasets/DrQA_KQuAD/kquad_2k_test_set-processed-konlpy.txt",
+    "dev_json": "data/datasets/DrQA_KQuAD/kquad_2k_test_set.json",
+    "display_iter": 25,
+    "doc_layers": 3,
+    "dropout_emb": 0.4,
+    "dropout_rnn": 0.4,
+    "dropout_rnn_output": true,
+    "embed_dir": "/scratch1/tshim/DrQA/data/embeddings",
+    "embedding_dim": 300,
+    "embedding_file": "",
+    "expand_dictionary": false,
+    "fix_embeddings": false,
+    "gpu": -1,
+    "grad_clipping": 10,
+    "hidden_size": 128,
+    "learning_rate": 0.1,
+    "log_file": "./models/kquad2k25konlpy_woembed.txt",
+    "max_len": 15,
+    "model_dir": "./models",
+    "model_file": "./models/kquad2k25konlpy_woembed.mdl",
+    "model_name": "kquad2k25konlpy_woembed",
+    "model_type": "rnn",
+    "momentum": 0,
+    "no_cuda": false,
+    "num_epochs": 40,
+    "official_eval": true,
+    "optimizer": "adamax",
+    "parallel": false,
+    "pretrained": "",
+    "question_layers": 3,
+    "question_merge": "self_attn",
+    "random_seed": 1013,
+    "restrict_vocab": true,
+    "rnn_padding": false,
+    "rnn_type": "lstm",
+    "sort_by_len": true,
+    "test_batch_size": 128,
+    "train_file": "data/datasets/DrQA_KQuAD/kquad_2k25%_training_set-processed-konlpy.txt",
+    "tune_partial": 0,
+    "uncased_doc": false,
+    "uncased_question": false,
+    "use_cnn": true,
+    "use_in_question": true,
+    "use_lemma": false,
+    "use_ner": false,
+    "use_pos": false,
+    "use_qemb": true,
+    "use_tf": true,
+    "valid_metric": "f1",
+    "weight_decay": 0
+} ]
+06/29/2018 05:07:31 PM: [ ---------------------------------------------------------------------------------------------------- ]
+06/29/2018 05:07:31 PM: [ Starting training... ]

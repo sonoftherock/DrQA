@@ -114,7 +114,6 @@ class DocReader(object):
         logger.info('Loading pre-trained embeddings for %d words from %s' %
                     (len(words), embedding_file))
         embedding = self.network.embedding.weight.data
-        char_embedding = self.network.char_embedding.weight.data
 
         # When normalized, some words are duplicated. (Average the embeddings).
         vec_counts = {}
@@ -294,10 +293,10 @@ class DocReader(object):
         if self.use_cuda:
             inputs = [e if e is None else
                       Variable(e.cuda(async=True), volatile=True)
-                      for e in ex[:5]]
+                      for e in ex[:7]]
         else:
             inputs = [e if e is None else Variable(e, volatile=True)
-                      for e in ex[:5]]
+                      for e in ex[:7]]
 
         # Run forward
         score_s, score_e = self.network(*inputs)

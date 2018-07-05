@@ -71,7 +71,14 @@ def load_answers(filename):
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 ans[qa['id']] = list(map(lambda x: x['text'], qa['answers']))
-    return ans
+    
+    ans_span = {}
+    for article in examples:
+            for paragraph in article['paragraphs']:
+                    for qa in paragraph['qas']:
+                            ans_span[qa['id']] = list(map(lambda x: (x['answer_start'], x['answer_start'] + len(x['text'])), qa['answers']))
+
+    return ans, ans_span
 
 
 # ------------------------------------------------------------------------------
@@ -203,7 +210,7 @@ def span_overlap(prediction, ground_truth):
     start = max(prediction[0], ground_truth[0])
     end = min(prediction[1], ground_truth[1])
     if end > start:
-        return start, end
+        return (start, end)
     return None
 
 
@@ -213,20 +220,24 @@ def f1_score(prediction, ground_truth):
     #ground_truth_tokens = normalize_answer(ground_truth).split()
     #common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
     overlap = span_overlap(prediction, ground_truth)
-    precision = (overlap[1] - overlap[0]) / (prediction[1] - prediction[0])
-    recall = (overlap[1] - overlap[0]) / (ground_truth[1] - ground_truth[0]) 
-    #num_same = sum(common.values())
-    #if num_same == 0:
-        #return 0
-    #precision = 1.0 * num_same / len(prediction_tokens)
-    #recall = 1.0 * num_same / len(ground_truth_tokens)
-    f1 = (2 * precision * recall) / (precision + recall)
+    if overlap is None:
+        f1 = 0
+    else:
+        precision = (overlap[1] - overlap[0]) / (prediction[1] - prediction[0])
+        recall = (overlap[1] - overlap[0]) / (ground_truth[1] - ground_truth[0]) 
+        #num_same = sum(common.values())
+        #if num_same == 0:
+            #return 0
+        #precision = 1.0 * num_same / len(prediction_tokens)
+        #recall = 1.0 * num_same / len(ground_truth_tokens)
+        f1 = (2 * precision * recall) / (precision + recall)
     return f1
 
 
 def exact_match_score(prediction, ground_truth):
     """Check if the prediction is a (soft) exact match with the ground truth."""
-    return normalize_answer(prediction) == normalize_answer(ground_truth)
+    #return normalize_answer(prediction) == normalize_answer(ground_truth)
+    return prediction == ground_truth
 
 
 def regex_match_score(prediction, pattern):

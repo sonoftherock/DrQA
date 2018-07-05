@@ -1,0 +1,3 @@
+07/02/2018 01:28:06 PM: [ COMMAND: scripts/reader/train.py --model-name kquad2k75konlpy_woem --data-dir data/datasets/DrQA_KQuAD --train-file kquad_2k75%_training_set-processed-konlpy.txt --dev-file kquad_2k_test_set-processed-konlpy.txt --dev-json kquad_2k_test_set.json --use-pos False --use-ner False --use-lemma False --num-epochs 10 --tune-partial 1000 --model-dir ./models --embedding-file wiki.ko.vec ]
+07/02/2018 01:28:06 PM: [ ---------------------------------------------------------------------------------------------------- ]
+07/02/2018 01:28:06 PM: [ Load data files ]
